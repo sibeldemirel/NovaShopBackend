@@ -1,0 +1,139 @@
+// NovaShop — schéma de données (Prisma)
+// Modèle conceptuel du cahier des charges, §6.
+// Placer ce fichier dans backend/prisma/schema.prisma
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"] // requis pour l'image Docker alpine
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+enum OrderStatus {
+  EN_ATTENTE // en attente
+  PAYEE      // payée
+  PREPAREE   // préparée
+  EXPEDIEE   // expédiée
+  LIVREE     // livrée
+  ANNULEE    // annulée
+}
+
+enum PaymentStatus {
+  EN_ATTENTE
+  REUSSI
+  ECHOUE
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String   // haché (bcrypt/argon2) — jamais en clair, cf §8.3
+  role      Role     @default(CLIENT)
+  createdAt DateTime @default(now())
+
+  cart   Cart?
+  orders Order[]
+
+  @@map("users")
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  nom  String
+  slug String @unique
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  nom         String
+  description String?
+  prix        Decimal  @db.Decimal(10, 2) // prix HT — cf ADR, TVA appliquée à l'affichage/au calcul du total
+  stock       Int      @default(0)
+  image       String?
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Cart {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id       Int @id @default(autoincrement())
+  quantite Int
+
+  cartId Int
+  cart   Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId]) // un seul item par produit dans un panier donné
+  @@map("cart_items")
+}
+
+model Order {
+  id           Int         @id @default(autoincrement())
+  statut       OrderStatus @default(EN_ATTENTE)
+  montantTotal Decimal     @db.Decimal(10, 2) // recalculé côté serveur, jamais fait confiance au client (§4.3)
+  date         DateTime    @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  items   OrderItem[]
+  payment Payment?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id           Int     @id @default(autoincrement())
+  quantite     Int
+  prixUnitaire Decimal @db.Decimal(10, 2) // prix figé au moment de la commande, indépendant du prix courant du produit
+
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement())
+  stripeId  String        @unique // id de l'intention de paiement Stripe (idempotence, §5.2)
+  statut    PaymentStatus @default(EN_ATTENTE)
+  montant   Decimal       @db.Decimal(10, 2)
+  createdAt DateTime      @default(now())
+
+  orderId Int   @unique
+  order   Order @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
