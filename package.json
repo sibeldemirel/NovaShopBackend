@@ -1,0 +1,14 @@
+{
+  "name": "novashop-backend",
+  "version": "0.1.0",
+  "description": "API NovaShop — starter kit (adaptez-le à votre stack)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "jest",
+    "test:cov": "jest --coverage",
+    "lint": "eslint ."
+  },
+  "dependencies": { "express": "^4.19.2" },
+  "devDependencies": { "eslint": "^8.57.0", "jest": "^29.7.0", "supertest": "^7.0.0" }
+}
