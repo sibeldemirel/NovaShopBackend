@@ -37,3 +37,51 @@ describe('computeTotal', () => {
     expect(() => computeTotal([{ price: 10, quantity: 1 }], { promoCode: 'XXX' })).toThrow();
   });
 });
+
+const { subtotal, tierDiscount, promoDiscount, shipping, computeTotal } = require('../src/domain/pricing');
+
+describe('subtotal — cas limites supplémentaires', () => {
+  test('article invalide (champ manquant) => erreur', () => {
+    expect(() => subtotal([{ price: 10 }])).toThrow('Article invalide');
+    expect(() => subtotal([{ quantity: 1 }])).toThrow('Article invalide');
+  });
+
+  test('quantite non entiere => erreur', () => {
+    expect(() => subtotal([{ price: 10, quantity: 1.5 }])).toThrow('Quantité invalide');
+  });
+
+  test('items n\'est pas un tableau => erreur', () => {
+    expect(() => subtotal(null)).toThrow('items doit être un tableau');
+    expect(() => subtotal('pas un tableau')).toThrow();
+  });
+});
+
+describe('tierDiscount — testé isolément', () => {
+  test('aucune remise a exactement 100 (limite incluse)', () => {
+    expect(tierDiscount(100)).toBe(0);
+  });
+  test('remise strictement au-dela de 100', () => {
+    expect(tierDiscount(100.01)).toBeGreaterThan(0);
+  });
+});
+
+describe('promoDiscount — testé isolément', () => {
+  test('sans code => 0', () => { expect(promoDiscount(100, undefined)).toBe(0); });
+});
+
+describe('computeTotal — cas supplémentaires', () => {
+  test('cumule remise palier ET code promo', () => {
+    const r = computeTotal([{ price: 60, quantity: 2 }], { promoCode: 'BIENVENUE10' });
+    expect(r.discount).toBeCloseTo(18, 2);
+  });
+
+  test('taux de TVA personnalise', () => {
+    const r = computeTotal([{ price: 100, quantity: 1 }], { vatRate: 0.10 });
+    expect(r.vat).toBe(10);
+  });
+
+  test('le total ne descend jamais sous 0', () => {
+    const r = computeTotal([{ price: 100, quantity: 2 }], { promoCode: 'BIENVENUE10' });
+    expect(r.total).toBeGreaterThanOrEqual(0);
+  });
+});

@@ -1,6 +1,5 @@
 // NovaShop — schéma de données (Prisma)
 // Modèle conceptuel du cahier des charges, §6.
-// Placer ce fichier dans backend/prisma/schema.prisma
 
 generator client {
   provider      = "prisma-client-js"
