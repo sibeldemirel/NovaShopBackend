@@ -1,7 +1,6 @@
 // Cœur métier NovaShop — logique de calcul du panier.
-// C'est ICI que se concentrent vos premiers tests unitaires.
 const VAT_RATE = 0.20;                 // TVA 20 %
-const PROMOS = { BIENVENUE10: 0.10 };  // codes promo (remise en %)
+const PROMOS = { BIENVENUE10: 0.10, SUPERVIP40: 0.40 };  // codes promo (remise en %)
 
 function assertItem(it) {
   if (!it || typeof it.price !== 'number' || typeof it.quantity !== 'number') {
@@ -35,11 +34,13 @@ function shipping(sub) {
 function computeTotal(items, { promoCode, vatRate = VAT_RATE } = {}) {
   const sub = subtotal(items);
   const discount = round2(tierDiscount(sub) + promoDiscount(sub, promoCode));
-  const taxable = Math.max(0, sub - discount);
+  const plafond = round2(0.30 * sub); // la remise ne peut pas dépasser 30% du sous-total
+  const discountFinal = Math.min(discount, plafond);
+  const taxable = Math.max(0, sub - discountFinal);
   const vat = round2(taxable * vatRate);
   const ship = shipping(sub);
   const total = Math.max(0, round2(taxable + vat + ship));
-  return { subtotal: round2(sub), discount, vat, shipping: ship, total };
+  return { subtotal: round2(sub), discount: discountFinal, vat, shipping: ship, total };
 }
 
 module.exports = { subtotal, tierDiscount, promoDiscount, shipping, computeTotal, VAT_RATE };

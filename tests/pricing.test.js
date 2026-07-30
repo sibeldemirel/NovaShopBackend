@@ -1,4 +1,4 @@
-const { subtotal, shipping, computeTotal } = require('../src/domain/pricing');
+const { subtotal, tierDiscount, promoDiscount, shipping, computeTotal } = require('../src/domain/pricing');
 
 describe('subtotal', () => {
   test('panier vide => 0', () => { expect(subtotal([])).toBe(0); });
@@ -37,8 +37,6 @@ describe('computeTotal', () => {
     expect(() => computeTotal([{ price: 10, quantity: 1 }], { promoCode: 'XXX' })).toThrow();
   });
 });
-
-const { subtotal, tierDiscount, promoDiscount, shipping, computeTotal } = require('../src/domain/pricing');
 
 describe('subtotal — cas limites supplémentaires', () => {
   test('article invalide (champ manquant) => erreur', () => {
@@ -84,4 +82,14 @@ describe('computeTotal — cas supplémentaires', () => {
     const r = computeTotal([{ price: 100, quantity: 2 }], { promoCode: 'BIENVENUE10' });
     expect(r.total).toBeGreaterThanOrEqual(0);
   });
+});
+
+test('la remise est plafonnée à 30% du sous-total (cas actif)', () => {
+  const r = computeTotal([{ price: 100, quantity: 1 }], { promoCode: 'SUPERVIP40' });
+  expect(r.discount).toBeCloseTo(30, 2);
+});
+
+test('le plafond ne s\'active pas si la remise cumulée reste sous 30%', () => {
+  const r = computeTotal([{ price: 60, quantity: 2 }], { promoCode: 'BIENVENUE10' });
+  expect(r.discount).toBeCloseTo(18, 2);
 });
