@@ -31,7 +31,7 @@ describe("shipping (frais de port)", () => {
     expect(shipping(50)).toBe(0);
   });
   test("5 en dessous de 50", () => {
-    expect(shipping(49.99)).toBe(999);
+    expect(shipping(49.99)).toBe(5);
   });
   test("panier vide => 0", () => {
     expect(shipping(0)).toBe(0);
