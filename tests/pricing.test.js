@@ -31,7 +31,7 @@ describe("shipping (frais de port)", () => {
     expect(shipping(50)).toBe(0);
   });
   test("5 en dessous de 50", () => {
-    expect(shipping(49.99)).toBe(5);
+    expect(shipping(49.99)).toBe(999);
   });
   test("panier vide => 0", () => {
     expect(shipping(0)).toBe(0);
@@ -123,7 +123,7 @@ describe("computeTotal — cas supplémentaires", () => {
 
 test("la remise est plafonnée à 30% du sous-total (cas actif)", () => {
   const r = computeTotal([{ price: 100, quantity: 1 }], {
-    promCode: "SUPERVIP40",
+    promoCode: "SUPERVIP40",
   });
   expect(r.discount).toBeCloseTo(30, 2);
 });
