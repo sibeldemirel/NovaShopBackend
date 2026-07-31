@@ -1,4 +1,4 @@
-const { computeTotal } = require('./pricing');
+const { computeTotal } = require("./pricing");
 
 function createOrder(cart, { repo, notifier }) {
   const totals = computeTotal(cart.items, { promoCode: cart.promoCode });
