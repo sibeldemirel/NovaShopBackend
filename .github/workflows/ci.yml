@@ -25,7 +25,7 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
       - name: Générer le rapport JSON complet
         if: always()
-        run: npm audit --json > audit-report.json
+        run: npm audit --json > audit-report.json || true
       - name: Publier le rapport (artefact)
         if: always()
         uses: actions/upload-artifact@v4
