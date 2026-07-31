@@ -11,3 +11,30 @@ jobs:
       - run: npm install
       - run: npm run lint
       - run: npm test -- --coverage
+<<<<<<< Updated upstream
+=======
+      - run: npm audit --omit=dev --audit-level=high
+  sca:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Audit (bloquant sur high, hors devDependencies)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Générer le rapport JSON complet
+        if: always()
+        run: npm audit --json > audit-report.json
+      - name: Publier le rapport (artefact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sca-report
+          path: audit-report.json
+      - name: Résumé dans le run
+        if: always()
+        run: npm audit | tee -a "$GITHUB_STEP_SUMMARY"
+>>>>>>> Stashed changes
